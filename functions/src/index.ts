@@ -12,6 +12,7 @@ export const convertPost = functions.https.onRequest(
 	async (req: Request, res: Response) => {
 		if (req.method !== "POST") {
 			res.status(405).json({ message: "Method not allowed" });
+			return;
 		}
 
 		try {
@@ -21,6 +22,7 @@ export const convertPost = functions.https.onRequest(
 			const validation = validateLink(link);
 			if (!validation.isValid) {
 				res.status(400).json({ message: "Invalid link" });
+				return;
 			}
 
 			const browser = await puppeteer.launch({
@@ -90,6 +92,7 @@ export const convertPost = functions.https.onRequest(
 			if (!element) {
 				await browser.close();
 				res.status(404).json({ message: "Post element not found" });
+				return;
 			}
 
 			const screenshot = (await element?.screenshot({
@@ -101,9 +104,11 @@ export const convertPost = functions.https.onRequest(
 			await browser.close();
 
 			res.status(200).json({ imageUrl });
+			return;
 		} catch (error) {
 			console.error("Error converting post:", error);
 			res.status(500).json({ message: "Failed to convert post" });
+			return;
 		}
 	}
 );
