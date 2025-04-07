@@ -127,7 +127,7 @@ export const convertPost = functions.https.onRequest(
 
 				await browser.close();
 
-				res.status(200).json({ imageUrl });
+				res.status(200).json({ imageUrl, platform });
 				return;
 			} catch (error) {
 				console.error("Error converting post:", error);
