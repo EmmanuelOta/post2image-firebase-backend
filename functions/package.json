@@ -8,7 +8,7 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-	"postinstall": "node node_modules/puppeteer/install.js"
+	"postinstall": "npx puppeteer browsers install chrome@135.0.7049.42"
   },
   "engines": {
     "node": "18"
