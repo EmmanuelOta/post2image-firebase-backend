@@ -1,8 +1,8 @@
 import * as functions from "firebase-functions";
 import * as puppeteer from "puppeteer";
-import { validateLink } from "./validatelink";
 import { Request, Response } from "express";
 import cors from "cors";
+//import { validateLink } from "./validatelink";
 
 const corsHandler = cors({
 	origin: [
@@ -29,12 +29,14 @@ export const convertPost = functions.https.onRequest(
 			try {
 				const { link, platform } = req.body;
 
-				//validate the link again on the server side
+				/** 
+				 * //validate the link again on the server side
 				const validation = validateLink(link);
 				if (!validation.isValid) {
 					res.status(400).json({ message: "Invalid link" });
 					return;
 				}
+				*/
 
 				const browser = await puppeteer.launch({
 					headless: true,
