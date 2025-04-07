@@ -61,7 +61,7 @@ export const convertPost = functions.https.onRequest(
 				await page.setViewport({ width: 600, height: 800 });
 				await page.goto(link, {
 					waitUntil: "networkidle2",
-					timeout: 60000,
+					timeout: 100000,
 				});
 
 				switch (platform) {
@@ -69,7 +69,7 @@ export const convertPost = functions.https.onRequest(
 						await page.waitForSelector(
 							'article[data-testid="tweet"]',
 							{
-								timeout: 60000,
+								timeout: 100000,
 							}
 						);
 						break;
@@ -77,27 +77,27 @@ export const convertPost = functions.https.onRequest(
 						await page.waitForSelector(
 							'article[role="presentation"]',
 							{
-								timeout: 60000,
+								timeout: 100000,
 							}
 						);
 						break;
 					case "Threads":
 						await page.waitForSelector("article", {
-							timeout: 60000,
+							timeout: 100000,
 						});
 						break;
 					case "Facebook":
 						await page.waitForSelector(
 							'[data-testid="post_message"]',
 							{
-								timeout: 60000,
+								timeout: 100000,
 							}
 						);
 						break;
 					case "TikTok":
 						await page.waitForSelector(
 							".tiktok-1rgp3yt-DivItemContainer",
-							{ timeout: 60000 }
+							{ timeout: 100000 }
 						);
 						break;
 					default:
