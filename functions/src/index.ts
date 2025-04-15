@@ -53,16 +53,46 @@ export const convertPost = functions.https.onRequest(
 
 				const page = await browser.newPage();
 
+				// Add these new configurations
+				await page.setExtraHTTPHeaders({
+					'Accept-Language': 'en'
+				});
+
 				await page.setUserAgent(
-					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-						"(KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36"
+					'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 				);
 
-				await page.setViewport({ width: 600, height: 800 });
+				// Increase viewport size
+				await page.setViewport({
+					width: 1920,
+					height: 1080,
+					deviceScaleFactor: 2
+				});
+
+				// Block unnecessary resources
+				await page.setRequestInterception(true);
+				page.on('request', (req) => {
+					if (req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
+						req.abort();
+					} else {
+						req.continue();
+					}
+				});
+
 				await page.goto(link, {
 					waitUntil: "networkidle2",
 					timeout: 100000,
 				});
+
+				// Add before the switch statement
+				if (platform === "Instagram" || platform === "Facebook") {
+					await page.evaluate(() => {
+						const cookies = document.querySelector('[data-testid="cookie-policy-dialog"]');
+						if (cookies) {
+							cookies.remove();
+						}
+					});
+				}
 
 				switch (platform) {
 					case "X":
@@ -70,47 +100,107 @@ export const convertPost = functions.https.onRequest(
 							'article[data-testid="tweet"]',
 							{
 								timeout: 100000,
+								visible: true
 							}
 						);
 						break;
 					case "Instagram":
-						await page.waitForSelector(
-							'article[role="presentation"]',
-							{
-								timeout: 100000,
-							}
-						);
-						break;
+							// First remove login popup
+							await page.evaluate(() => {
+									// Remove login dialog
+									const loginDialog = document.querySelector('div._ac4d');
+									if (loginDialog) {
+											loginDialog.remove();
+									}
+									// Remove cookie notice if present
+									const cookieNotice = document.querySelector('div._ab8w');
+									if (cookieNotice) {
+											cookieNotice.remove();
+									}
+							});
+							// Wait for post content
+							await page.waitForSelector(
+									'div._aam1', // Main post container
+									{
+											timeout: 100000,
+											visible: true
+									}
+							);
+							break;
 					case "Threads":
-						await page.waitForSelector("article", {
-							timeout: 100000,
-						});
-						break;
+							await page.evaluate(() => {
+									// Remove any modals or overlays
+									const overlays = document.querySelectorAll('[role="dialog"]');
+									overlays.forEach(overlay => overlay.remove());
+							});
+							// Wait for main post content
+							await page.waitForSelector(
+									'[role="main"] div.x1ypdohk', // Main post container
+									{
+											timeout: 100000,
+											visible: true
+									}
+							);
+							break;
 					case "Facebook":
-						await page.waitForSelector(
-							'[data-testid="post_message"]',
-							{
-								timeout: 100000,
-							}
-						);
-						break;
+							await page.waitForSelector(
+									'div.x1lliihq', // Facebook post container
+									{
+											timeout: 100000,
+											visible: true
+									}
+							);
+							break;
 					case "TikTok":
-						await page.waitForSelector(
-							".tiktok-1rgp3yt-DivItemContainer",
-							{ timeout: 100000 }
-						);
-						break;
+							await page.waitForSelector(
+									'div.tiktok-1y6genuq-DivBrowserModeContainer', // TikTok post container
+									{
+											timeout: 100000,
+											visible: true
+									}
+							);
+							break;
 					default:
-						throw new Error("Unsupported platform");
+							throw new Error("Unsupported platform");
+				}
+
+				// Add this before taking screenshot for X/Twitter
+				if (platform === "X") {
+					await page.evaluate(() => {
+							// Simpler approach to remove blur and banners
+							const style = document.createElement('style');
+							style.innerHTML = `
+									/* Remove all blur effects */
+									* {
+											filter: none !important;
+											-webkit-filter: none !important;
+									}
+									
+									/* Hide all promotional banners and login prompts */
+									div[data-testid="inlinePrompt"],
+									div[data-testid="loggedOutHome"],
+									div[data-testid="TopNavBar"] {
+											display: none !important;
+									}
+							`;
+							document.head.appendChild(style);
+					});
+					
+					// Wait for styles to apply
+					await new Promise(resolve => setTimeout(resolve, 1000));
 				}
 
 				let element;
 				if (platform === "X") {
 					element = await page.$('article[data-testid="tweet"]');
 				} else if (platform === "Instagram") {
-					element = await page.$('article[role="presentation"]');
+					element = await page.$('div._aam1'); // Updated Instagram container
 				} else if (platform === "Threads") {
-					element = await page.$("article");
+					element = await page.$('[role="main"] div.x1ypdohk'); // Updated Threads container
+				} else if (platform === "Facebook") {
+					element = await page.$('div.x1lliihq'); // Updated Facebook container
+				} else if (platform === "TikTok") {
+					element = await page.$('div.tiktok-1y6genuq-DivBrowserModeContainer'); // Updated TikTok container
 				}
 
 				if (!element) {
