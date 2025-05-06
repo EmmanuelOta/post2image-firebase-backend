@@ -8,13 +8,14 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-	"postinstall": "npx puppeteer browsers install chrome@135.0.7049.42"
+    "postinstall": "playwright install chromium"
   },
   "engines": {
     "node": "18"
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@playwright/test": "^1.52.0",
     "cors": "^2.8.5",
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^6.0.1",
